@@ -64,6 +64,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set "latest" flavor value
+        id: set-flavor
+        run: |
+          if [ "${{ matrix.targets }}" == "base" ]; then
+            echo "LATEST_FLAVOR=auto" >> $GITHUB_ENV
+          else
+            echo "LATEST_FLAVOR=false" >> $GITHUB_ENV
+          fi
+
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -71,11 +80,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch,suffix=-${{ matrix.targets }}
-            type=ref,event=pr,suffix=-${{ matrix.targets }}
-            type=semver,pattern={{version}},suffix=-${{ matrix.targets }}
-            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.targets }}
+          flavor: |
+            latest=${{ env.LATEST_FLAVOR }}
+            prefix=
+            suffix=-${{ matrix.targets }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
