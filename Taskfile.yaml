@@ -1,0 +1,15 @@
+version: '3'
+tasks:
+  build:
+    cmds:
+      - docker build -t docker-multitool:base --target base .
+      - docker build -t docker-multitool:oom --target oom .
+      - docker build -t docker-multitool:test .
+  run:
+    cmds:
+      - docker run --platform linux/amd64 --rm -it docker-multitool:base
+  oom:
+    cmds:
+      - mkdir -p ./dumps
+      - rm -f ./dumps/*.hprof
+      - docker run --platform linux/amd64 --rm -it --memory 30m -v $(pwd)/dumps:/app/dumps docker-multitool:oom

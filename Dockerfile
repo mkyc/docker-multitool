@@ -1,4 +1,9 @@
-FROM alpine:3.18.0
+FROM alpine/java:21-jdk as builder
+COPY oom/OOMCrash.java /tmp/OOMCrash.java
+RUN javac /tmp/OOMCrash.java
+
+
+FROM alpine:3.18.0 as base
 
 # `curl` is required to make http requests
 # `jq` is required to parse and format JSON
@@ -10,3 +15,13 @@ RUN apk update && \
     rm -rf /var/cache/apk/*
 
 CMD [ "bash" ]
+
+FROM alpine/java:21-jdk as oom
+
+RUN mkdir -p /app/dumps
+COPY --from=builder /tmp/OOMCrash.class /app/OOMCrash.class
+COPY --chmod=755 oom/oom.sh /app/oom.sh
+CMD [ "/app/oom.sh" ]
+
+#just to have build backward compatibility
+FROM base
